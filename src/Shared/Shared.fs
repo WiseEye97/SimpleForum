@@ -40,15 +40,8 @@ module UserModel =
             match this with
             | Password p -> p
 
-    type Email =  
-        | Valid of ValidEmail
-        | Invalid
-    with
-        member this.GetMail() = 
-            match this with
-            | Valid (ValidEmail mail) -> Some mail
-            | _ -> None
-
+    
+        
     let createUserName (s:string) = 
         if s.Length > 6 && (not (s.Contains "@")) then
             Some (UserName s)
@@ -57,9 +50,9 @@ module UserModel =
     
     let createEmail (s:string) =
         if Regex.IsMatch(s,@"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$") then
-            s |> ValidEmail |> Valid |> Some
+            s |> ValidEmail |> Some
         else
-            Some Invalid
+            None
 
     let createPassword (s:string) =
         let rec loop : (int * char list -> bool) =
@@ -78,28 +71,26 @@ module UserModel =
 
     let (|UserNamePatt|_|) (s:string) = createUserName s
     let (|PasswordPatt|_|) (s:string) = createPassword s
-    let (|ValidEmaikPatt|_|) (s:string) = 
-        match createEmail s with
-        | Some (Valid v) -> Some v
-        | _ -> None
+    let (|ValidEmaikPatt|_|) (s:string) = createEmail s
+       
 
     type User = {
         username : UserName
-        email : Email
+        email : ValidEmail
         password : Password
     }
 
     with 
         member this.UpdateUserByName (usrName:UserName) = {this with username = usrName}
-        member this.UpdateUserByEmail (email:ValidEmail) = {this with email = Valid email}
+        member this.UpdateUserByEmail (email:ValidEmail) = {this with email = email}
         static member CreateUser (usrName:UserName) (email:ValidEmail) (password : Password) = {
             username = usrName
-            email = Valid email
+            email = email
             password = password
         }
         static member CreateFromStrings : (string*string*string) -> User option  =
             function
-            | UserNamePatt usr , PasswordPatt pswd, ValidEmaikPatt em -> Some {username = usr;email = Valid em;password = pswd}
+            | UserNamePatt usr , PasswordPatt pswd, ValidEmaikPatt em -> Some {username = usr;email = em;password = pswd}
             | _ -> None
 
 

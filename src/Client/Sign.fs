@@ -46,20 +46,24 @@ let init() =
     {passwordBuffer = {input = "";validation = InValid};signedState = Idle;userModel = None;userBuffer = {input = "";validation = InValid};mailBuffer = {input = "";validation = InValid}},Cmd.none
 
 let (|ValidUsr|_|) = function | (UserNameChanged newVal) -> createUserName newVal | _ -> None
-let (|ValidEmail|_|) = function | (EmailChanged newVal) -> createEmail newVal | _ -> None
+let (|ValidEmail|_|) = 
+    function 
+    | (EmailChanged newVal) -> createEmail newVal
+    | _ -> None
+
 let (|ValidPswd|_|) = function | (PasswordChanged p) -> createPassword p | _ -> None
 
 let (|IsValidUser|_|) = 
     function
     | {passwordBuffer = {validation = Valid} as p;userBuffer = {validation = Valid} as u;mailBuffer = {validation = Valid} as e} as md -> 
-        let usr,(Some (Email.Valid em)),pswd = createUserName u.input , createEmail e.input ,createPassword p.input
-        Some (User.CreateUser usr.Value em pswd.Value)
+        let usr,em,pswd = createUserName u.input ,createEmail e.input ,createPassword p.input
+        Some (User.CreateUser usr.Value em.Value pswd.Value)
     | _ -> None
 
 module Sender =
     let sendSign =
         function
-        | {username = usr;email = (Email.Valid em);password = pswd} ->
+        | {username = usr;email = em;password = pswd} ->
 
             let message = {ClientMessages.SignInMessage.username = usr.GetName();ClientMessages.SignInMessage.email = em.GetStringEmail();ClientMessages.SignInMessage.password = pswd.GetPswd()}
 
@@ -76,33 +80,37 @@ module Sender =
             
             Cmd.ofPromise (fun _ -> cmd) () ServerResponse Err |> Some
 
-        | _ -> None
 
-
-let update (msg : Msg) (model:Model) = 
+let update (msg : Msg) (model:Model) =
+    console.log(msg)
     match msg,model with
     | Ignore,_ -> model,Cmd.none
     | OnSigned,IsValidUser user ->
         let r = Sender.sendSign user 
+        console.log(r)
         {model with signedState = Waiting},r.Value
     | OnSigned,_ ->
+        console.log("Jeste tutaj kurwa")
         model,[]
     | ValidPswd p, _ ->
         {model with passwordBuffer = {input = p.GetPswd();validation = Valid}},Cmd.none
     | ValidUsr usr,_ ->
         {model with userBuffer = {input = usr.GetName();validation = Valid}},Cmd.none
     | ValidEmail em,_ ->
-        {model with mailBuffer = {input = (em.GetMail()).Value;validation = Valid}},Cmd.none
+        {model with mailBuffer = {input = em.GetStringEmail();validation = Valid}},Cmd.none
     | UserNameChanged newVal,_ ->
         {model with userBuffer = {input = newVal;validation = InValid}},Cmd.none
     | EmailChanged newVal,_ ->
         {model with mailBuffer = {input = newVal;validation = InValid}},Cmd.none
     | PasswordChanged p,_ ->
-        {model with userBuffer = {input = p;validation = InValid}},Cmd.none
+        {model with passwordBuffer = {input = p;validation = InValid}},Cmd.none
     | ServerResponse {state = true},_ ->
         {model with signedState = SignedOk},[]
     | ServerResponse {state = false},_ ->
         {model with signedState = SignedFailed},[]
+    | Err ex,_ ->
+        console.log(ex)
+        model,[]
 
 
 

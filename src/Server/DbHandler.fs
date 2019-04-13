@@ -54,7 +54,7 @@ module UserDBController =
 
                 com.Parameters.AddRange [|
                         SqlParameter("@nick",user.username.GetName())
-                        SqlParameter("@mail",user.email.GetMail().Value)
+                        SqlParameter("@mail",user.email.GetStringEmail())
                         SqlParameter("@pswd",user.password.GetPswd())
                     |]
                 let! _ = com.ExecuteNonQueryAsync()
