@@ -3,6 +3,7 @@ module ViewUtil
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import.Browser
+open Shared.ServerMessages
 
 type OnSubmit = (unit -> unit)
 type OnChange = (string -> unit)
@@ -96,15 +97,18 @@ let renderForm inputs (onSubmit:OnSubmit) isLoading =
     ]
     
 let signedOkPage() =
-    div [ClassName "content"] [
-        p [] [
-            str "Signed successfully , Now you need to confirm you email"
-        ]
+    div [ClassName "container"] [
+            str "Signed successfully , Now you need to confirm you email"  
     ]
-let signedFailedPage() =
-    div [ClassName "content"] [
-        p [] [
-            str "Sorry something goes wrong Please retry later"
+let signedFailedPage reason =
+    let body errMsg = 
+        div [ClassName "container"] [ 
+                str errMsg
         ]
-    ]
+
+    match reason with
+    | NickExists -> "User with this name already exists"
+    | EmailExists -> "Account with this email already exists"
+    | InternalError -> "Ooops internal server error please try later"
+    |> body
     

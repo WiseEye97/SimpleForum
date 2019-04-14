@@ -9,6 +9,7 @@ open Fable.PowerPack.Fetch
 open Fable.PowerPack
 open Shared
 open Shared.UserModel
+open Shared.ServerMessages
 open Thoth.Json
 
 type IsValidInput =
@@ -24,7 +25,7 @@ type SignState =
     | Idle
     | Waiting
     | SignedOk
-    | SignedFailed
+    | SignedFailed of UserErros
 
 type Model = {
     userModel : User option
@@ -106,11 +107,13 @@ let update (msg : Msg) (model:Model) =
         {model with passwordBuffer = {input = p;validation = InValid}},Cmd.none
     | ServerResponse {state = true},_ ->
         {model with signedState = SignedOk},[]
-    | ServerResponse {state = false;errorMessage = er},_ ->
+    | ServerResponse {state = false;errorMessage = Some er},_ ->
         console.log(er)
-        {model with signedState = SignedFailed},[]
+        {model with signedState = SignedFailed er},[]
     | Err ex,_ ->
         console.log(ex)
+        model,[]
+    | ServerResponse {state = false;errorMessage = None},_ ->
         model,[]
 
 
@@ -153,7 +156,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
         | {signedState = Idle} -> frm false
         | {signedState = Waiting} -> frm true
         | {signedState = SignedOk} -> signedOkPage()
-        | {signedState = SignedFailed} -> signedFailedPage()
+        | {signedState = SignedFailed reason} -> signedFailedPage reason
         
     renderBdy model
 

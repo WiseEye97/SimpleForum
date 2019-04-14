@@ -33,4 +33,4 @@ module userErrosDecoder =
         Decode.map2 (fun x y ->
                      {state = x;errorMessage = y}
         ) (Decode.field "state" Decode.bool)
-          (Decode.field "errorMessage" decodeErrorMsg ) 
+          (Decode.field "errorMessage" (Decode.oneOf [Decode.nil None;decodeErrorMsg])) 

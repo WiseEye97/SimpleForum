@@ -29,7 +29,7 @@ module UserDBController =
         
             use com = con.CreateCommand()
             com.CommandType <- CommandType.Text
-            com.CommandText <- "SELECT TOP(1) nick,mail FROM usersNew WHERE usersNew.nick = @nick OR usersNew.mail = @mail;"
+            com.CommandText <- "SELECT TOP(1) nick,mail FROM usersNew WHERE (usersNew.nick = @nick OR usersNew.mail = @mail) AND usersNew.isConfirmed = 1;"
 
             let usrN,usrM = user.username.GetName(),user.email.GetStringEmail()
 
