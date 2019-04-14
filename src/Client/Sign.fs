@@ -11,6 +11,7 @@ open Shared
 open Shared.UserModel
 open Shared.ServerMessages
 open Thoth.Json
+open Thoth.Elmish.FormBuilder.Types
 
 type IsValidInput =
     | Valid
@@ -63,24 +64,14 @@ let (|IsValidUser|_|) =
     | _ -> None
 
 module Sender =
+    
     let sendSign =
         function
         | {username = usr;email = em;password = pswd} ->
-
             let message = {ClientMessages.SignInMessage.username = usr.GetName();ClientMessages.SignInMessage.email = em.GetStringEmail();ClientMessages.SignInMessage.password = pswd.GetPswd()}
 
-            let defProps = [
-                    RequestProperties.Method HttpMethod.POST
-                    Fetch.requestHeaders [HttpRequestHeaders.ContentType "application/json"]
-                    RequestProperties.Body (unbox(Thoth.Json.Encode.Auto.toString(3, message)))
-            ]
-             
-            let cmd = promise{
-                let! res = Fetch.fetchAs<ServerMessages.SignInResponse> "/api/register" (Decoders.userErrosDecoder.ServerResponseDecoder) defProps
-                return res
-            } 
-            
-            Cmd.ofPromise (fun _ -> cmd) () ServerResponse Err |> Some
+            PromiseSender.sendGenericJson<ServerMessages.SignInResponse,Msg> message 3 Decoders.userErrosDecoder.ServerResponseDecoder "/api/register" ServerResponse Err
+            |> Some
 
 
 let update (msg : Msg) (model:Model) =

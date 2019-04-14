@@ -11,17 +11,13 @@ open Thoth.Json
 
 open Shared
 
-
-open Fulma
-
-
 // The model holds data that you want to keep track of while the application is running
 // in this case, we are keeping track of a counter
 // we mark it as optional, because initially it will not be available from the client
 // the initial value will be requested from server
 
 type SubModel =
-    | Login
+    | Login of Login.Model
     | Sign of Sign.Model
     | Home
 
@@ -35,7 +31,9 @@ type Model = {
 type Msg =
 | Ignore
 | SignMsg of Sign.Msg
+| LoginMsg of Login.Msg
 | InitSign
+| InitLogin
 
 let initialCounter = fetchAs<Counter> "/api/init" (Decode.Auto.generateDecoder())
 
@@ -50,12 +48,18 @@ let init () : Model * Cmd<Msg> =
 // these commands in turn, can dispatch messages to which the update function will react.
 let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
     match currentModel, msg with
+    | _ , InitLogin ->
+        let loginModel,loginCmd = Login.init()
+        {currentModel with subModel = Login loginModel},Cmd.map LoginMsg loginCmd
     | _ , InitSign -> 
         let signModel,signCmd = Sign.init()
         {currentModel with subModel = Sign signModel},Cmd.map SignMsg signCmd
     | {subModel = Sign signModel},SignMsg msg ->
         let signModel,signCmd = Sign.update msg signModel
         {currentModel with subModel = Sign signModel},Cmd.map SignMsg signCmd
+    | {subModel = Login loginModel},LoginMsg msg ->
+        let loginModel,loginCmd = Login.update msg loginModel
+        {currentModel with subModel = Login loginModel},Cmd.map LoginMsg loginCmd
     | _ , _ -> currentModel,[]
 
 module MainLayout =
@@ -73,7 +77,7 @@ module MainLayout =
                              a [ClassName "button is-primary";OnClick (fun _ -> dispatch InitSign)] [
                                  str "Sign Up"
                              ]
-                             a [ClassName "button is-light"] [
+                             a [ClassName "button is-light";OnClick (fun _ -> dispatch InitSign)] [
                                  str "Log In"
                              ]    
                          ]
@@ -86,6 +90,8 @@ module MainLayout =
         function
         | {subModel = Sign signModel} ->
             Sign.view signModel (SignMsg >> dispatch)
+        | {subModel = Login loginModel} ->
+            Login.view loginModel (LoginMsg >> dispatch)
         | _ -> div [] []
 
 
