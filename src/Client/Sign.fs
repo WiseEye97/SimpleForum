@@ -9,6 +9,7 @@ open Fable.PowerPack.Fetch
 open Fable.PowerPack
 open Shared
 open Shared.UserModel
+open Thoth.Json
 
 type IsValidInput =
     | Valid
@@ -72,9 +73,9 @@ module Sender =
                     Fetch.requestHeaders [HttpRequestHeaders.ContentType "application/json"]
                     RequestProperties.Body (unbox(Thoth.Json.Encode.Auto.toString(3, message)))
             ]
-
+             
             let cmd = promise{
-                let! res = Fetch.fetchAs<ServerMessages.SignInResponse> "/api/register" (Thoth.Json.Decode.Auto.generateDecoder()) defProps
+                let! res = Fetch.fetchAs<ServerMessages.SignInResponse> "/api/register" (Decoders.userErrosDecoder.ServerResponseDecoder) defProps
                 return res
             } 
             
@@ -90,7 +91,6 @@ let update (msg : Msg) (model:Model) =
         console.log(r)
         {model with signedState = Waiting},r.Value
     | OnSigned,_ ->
-        console.log("Jeste tutaj kurwa")
         model,[]
     | ValidPswd p, _ ->
         {model with passwordBuffer = {input = p.GetPswd();validation = Valid}},Cmd.none
@@ -106,7 +106,8 @@ let update (msg : Msg) (model:Model) =
         {model with passwordBuffer = {input = p;validation = InValid}},Cmd.none
     | ServerResponse {state = true},_ ->
         {model with signedState = SignedOk},[]
-    | ServerResponse {state = false},_ ->
+    | ServerResponse {state = false;errorMessage = er},_ ->
+        console.log(er)
         {model with signedState = SignedFailed},[]
     | Err ex,_ ->
         console.log(ex)
@@ -130,21 +131,21 @@ let view (model : Model) (dispatch : Msg -> unit) =
                 isPassword = false
                 placeholder = (PlaceHolder "Insert username here...")
                 icon = None
-            } , Some (getValidator "Name is valid" "Name is invalid" model.userBuffer)
+            } , Some (getValidator "Name is valid" "Name has to be at least 6 chars long" model.userBuffer)
             TextInput {
                 onchange = EmailChanged >> dispatch
                 labeltext = (LabelText "Email")
                 isPassword = false
                 placeholder = (PlaceHolder "Insert your e-mail here...")
                 icon = None
-            }, Some (getValidator  "Email avaialable" "Wrong Email" model.mailBuffer)
+            }, Some (getValidator  "Valid Email" "Wrong Email" model.mailBuffer)
             TextInput {
                 onchange = PasswordChanged >> dispatch
                 labeltext = (LabelText "Type password")
                 isPassword = true
                 placeholder = (PlaceHolder "password")
                 icon = None
-            } , Some (getValidator "Password is valid" "Password is invalid" model.passwordBuffer)
+            } , Some (getValidator "Password is valid" "Password has to contain at leas one Upper letter and one digit" model.passwordBuffer)
         ] (fun () -> dispatch OnSigned) isL
 
     let renderBdy = 

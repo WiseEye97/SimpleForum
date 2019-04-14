@@ -14,8 +14,14 @@ module ClientMessages =
 
 module ServerMessages =
 
+    type UserErros = 
+        | NickExists
+        | EmailExists
+        | InternalError
+
     type SignInResponse = {
         state : bool
+        errorMessage : UserErros option 
     }
 
 module UserModel = 

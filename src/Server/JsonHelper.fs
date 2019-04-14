@@ -5,7 +5,10 @@ open System.IO
 
 
 let serialize obj =
-    JsonConvert.SerializeObject obj
+    let s = JsonConvert.SerializeObject obj
+    printfn "%s" s
+    s
+
 
 let deserialize<'a> str =
     try
@@ -19,9 +22,9 @@ let des<'a> str =
       deserialize<'a> str
 
 let deserializeRequest<'a> (req: Stream) =
-      let buffer = Array.create 100 (byte 0)
+      let buffer = Array.create 200 (byte 0)
 
-      req.Read(buffer,0,100)
+      req.Read(buffer,0,200)
       |> printfn "read -> %d"
 
       buffer 
@@ -30,14 +33,15 @@ let deserializeRequest<'a> (req: Stream) =
       |> fun s -> printfn "%s" s; s
       |> des<'a>
 
-open DbHandler
+
 open Shared.ServerMessages
 open Shared.UserModel
 
-let serializeDbResult (dbRes : Result<unit, UserDBController.UserErros>) =
+let serializeDbResult (dbRes : Result<unit, UserErros>) =
+    printfn "dREs -> %A" dbRes
     match dbRes with
-    | Ok () -> {state = true}
-    | _ -> {state = false}
+    | Ok () -> {state = true;errorMessage = None}
+    | Error er -> {state = false;errorMessage = Some er}
     |> serialize
 
 let deserializeUserSignReq (req : Stream) =

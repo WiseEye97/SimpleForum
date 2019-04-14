@@ -23,7 +23,7 @@ let webApp = router {
             let! counter = getInitCounter()
             return! json counter next ctx
         })
-    get "/api/register" (fun next ctx ->
+    post "/api/register" (fun next ctx ->
         task {
             let! action = Controllers.UserController.insertUser ctx.Request.Body
             return! action next ctx

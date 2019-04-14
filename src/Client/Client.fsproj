@@ -6,6 +6,7 @@
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="UserModel.fs" />
     <Compile Include="ViewUtil.fs" />
+    <Compile Include="Decoders.fs" />
     <Compile Include="Sign.fs" />
     <Compile Include="Client.fs" />
   </ItemGroup>

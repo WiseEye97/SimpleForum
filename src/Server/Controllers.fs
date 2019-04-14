@@ -9,6 +9,6 @@ open FSharp.Control.Tasks.V2
         let insertUser (requestStream : Stream) =
             task {
                 let! resp = Services.insertUserService requestStream
-                return json resp
+                return text resp
             }
             

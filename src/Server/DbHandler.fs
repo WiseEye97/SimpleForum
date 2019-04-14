@@ -17,10 +17,9 @@ let openConnection() =
 module UserDBController =
 
     open Shared.UserModel
+    open Shared.ServerMessages
 
-    type UserErros = 
-        | NickExists
-
+    
     let isUserExists (user : User) =
         task {
             use! con = openConnection()
@@ -30,14 +29,33 @@ module UserDBController =
         
             use com = con.CreateCommand()
             com.CommandType <- CommandType.Text
-            com.CommandText <- "SELECT TOP(1) * FROM usersNew WHERE USERS.nick = '@nick';"
+            com.CommandText <- "SELECT TOP(1) nick,mail FROM usersNew WHERE usersNew.nick = @nick OR usersNew.mail = @mail;"
 
-            let param = SqlParameter("@nick",user.username)
-            com.Parameters.Add param |> ignore
+            let usrN,usrM = user.username.GetName(),user.email.GetStringEmail()
 
+            let p = SqlParameter("@nick",SqlDbType.VarChar, 100)
+            p.Value <- usrN
+
+            let p2 = SqlParameter("@mail",SqlDbType.VarChar, 100)
+            p2.Value <- usrM 
+
+            com.Parameters.AddRange [|
+                        p
+                        p2
+            |]
             
             let! reader = com.ExecuteReaderAsync()
-            return reader.HasRows
+            
+            if reader.Read() then
+                let x,y = reader.GetString(0),reader.GetString(1)
+                 
+                match (x,y) with
+                | a,_ when a = usrN -> return Error NickExists
+                | _,b when b = usrM -> return Error EmailExists
+                | _,_ -> return Error InternalError
+                
+            else
+                return Ok ()
         }
         
         
@@ -45,21 +63,24 @@ module UserDBController =
         task {
             use! con = openConnection()
             let! exists = isUserExists user
-            if exists then
-                return Error NickExists
-            else
+            match exists with
+            | Ok _ ->
                 use com = con.CreateCommand()
                 com.CommandType <- CommandType.Text
-                com.CommandText <- "INSERT INTO userNew (nick,mail,pswd,isConfirmed) VALUES('@nick','@mail','@pswd',0);"
-
+                com.CommandText <- "INSERT INTO usersNew (nick,mail,pswd,isConfirmed) VALUES(@nick,@mail,@pswd,0);"
+                
                 com.Parameters.AddRange [|
                         SqlParameter("@nick",user.username.GetName())
                         SqlParameter("@mail",user.email.GetStringEmail())
                         SqlParameter("@pswd",user.password.GetPswd())
                     |]
+
                 let! _ = com.ExecuteNonQueryAsync()
 
                 return Ok ()
+
+            | x -> return x
+
         }
 
 
