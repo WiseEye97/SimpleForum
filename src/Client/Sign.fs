@@ -44,6 +44,7 @@ type Msg =
     | ServerResponse of ServerMessages.SignInResponse
     | Err of exn
     | OnSigned
+    | CloseModal
 
 let init() =
     {passwordBuffer = {input = "";validation = InValid};signedState = Idle;userModel = None;userBuffer = {input = "";validation = InValid};mailBuffer = {input = "";validation = InValid}},Cmd.none
@@ -106,6 +107,9 @@ let update (msg : Msg) (model:Model) =
         model,[]
     | ServerResponse {state = false;errorMessage = None},_ ->
         model,[]
+    | CloseModal,_ ->
+        {model with signedState = Idle},[]
+
 
 
 
@@ -146,8 +150,8 @@ let view (model : Model) (dispatch : Msg -> unit) =
         function
         | {signedState = Idle} -> frm false
         | {signedState = Waiting} -> frm true
-        | {signedState = SignedOk} -> signedOkPage()
-        | {signedState = SignedFailed reason} -> signedFailedPage reason
+        | {signedState = SignedOk} -> signedOkPage (fun () -> dispatch CloseModal)
+        | {signedState = SignedFailed reason} -> signedFailedPage reason (fun () -> dispatch CloseModal)
         
     renderBdy model
 

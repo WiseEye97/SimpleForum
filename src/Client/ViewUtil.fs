@@ -95,20 +95,25 @@ let renderForm inputs (onSubmit:OnSubmit) isLoading =
             |> insertToField
         ]
     ]
-    
-let signedOkPage() =
-    div [ClassName "container"] [
-            str "Signed successfully , Now you need to confirm you email"  
-    ]
-let signedFailedPage reason =
-    let body errMsg = 
-        div [ClassName "container"] [ 
-                str errMsg
-        ]
 
+let private createModal onClose content=
+    div [ClassName "modal is-active"] [
+        div [ClassName "modal-background"] []
+        div [ClassName "modal-content"] [
+            p [] [str content]
+            button [ClassName "button is-danger";OnClick (fun _ -> onClose())] [
+                i [ClassName "far fa-window-close"] []
+            ]
+        ]
+    ]
+
+let signedOkPage onClose =
+    createModal onClose "Signed successfully , Now you need to confirm you email"   
+    
+let signedFailedPage reason onClose =
     match reason with
     | NickExists -> "User with this name already exists"
     | EmailExists -> "Account with this email already exists"
     | InternalError -> "Ooops internal server error please try later"
-    |> body
+    |> createModal onClose
     
