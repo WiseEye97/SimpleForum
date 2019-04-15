@@ -37,16 +37,21 @@ let deserializeRequest<'a> (req: Stream) =
 open Shared.ServerMessages
 open Shared.UserModel
 
-let serializeDbResult (dbRes : Result<unit, UserErros>) =
+let serializeDbResult<'e> (dbRes : Result<unit, 'e>) =
     printfn "dREs -> %A" dbRes
     match dbRes with
-    | Ok () -> {state = true;errorMessage = None}
+    | Ok () -> {Shared.ServerMessages.SimpleServerResponse.state = true;errorMessage = None}
     | Error er -> {state = false;errorMessage = Some er}
     |> serialize
 
 let deserializeUserSignReq (req : Stream) =
     match deserializeRequest<Shared.ClientMessages.SignInMessage> req with
     | Ok r -> User.CreateFromStrings (r.username , r.password , r.email)
+    | _ -> None
+
+let deserializeLoginReq (req : Stream) =
+    match deserializeRequest<Shared.ClientMessages.LogInMessage> req with
+    | Ok r -> Some r
     | _ -> None
 
 

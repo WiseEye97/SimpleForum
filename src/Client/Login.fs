@@ -2,6 +2,8 @@ module Login
 
 open Elmish
 open ViewUtil
+open Shared.ServerMessages
+open Shared.ClientMessages
 
 type LoginState = 
     | Idle
@@ -14,6 +16,8 @@ type InputChanged =
 type Msg =
     | InputChanged of InputChanged
     | Signed
+    | Logged of LogInResponse
+    | Err of exn
 
 type Model = {
     nickBuffer : string
@@ -30,9 +34,14 @@ let update (msg : Msg) (model:Model) =
         {model with nickBuffer = s},Cmd.none
     | InputChanged (Password s),_ ->
         {model with passwordBuffer = s},Cmd.none
-    | Signed, _ ->
-    
-        {model with loginState = Logging},Cmd.none
+    | Signed, _ ->  
+        {model with loginState = Logging},PromiseSender.sendGenericJson<LogInResponse,Msg> {username = model.nickBuffer;password = model.passwordBuffer} 2 Decoders.userErrosDecoder.loginDecoder "/api/login" Logged Err
+    | Logged {state = true;errorMessage = None},_ ->
+        model,[]
+    | Logged {state = false;errorMessage = Some er},_ ->
+        model,[]
+    | Logged {state = true;errorMessage = Some InternalServError},_ ->
+        model,[]
     
 let view (model : Model) (dispatch : Msg -> unit) =
 

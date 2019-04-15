@@ -1,6 +1,5 @@
 module DbHandler
 
-open Config
 open System.Data
 open System.Data.SqlClient
 open FSharp.Control.Tasks.V2
@@ -18,6 +17,7 @@ module UserDBController =
 
     open Shared.UserModel
     open Shared.ServerMessages
+    open Shared.ClientMessages
 
     
     let isUserExists (user : User) =
@@ -52,7 +52,7 @@ module UserDBController =
                 match (x,y) with
                 | a,_ when a = usrN -> return Error NickExists
                 | _,b when b = usrM -> return Error EmailExists
-                | _,_ -> return Error InternalError
+                | _,_ -> return Error SignErrors.InternalError
                 
             else
                 return Ok ()
@@ -81,6 +81,38 @@ module UserDBController =
 
             | x -> return x
 
+        }
+    
+    let loginUser (data : LogInMessage) =
+        task{
+
+            let (|ValidLogin|_|) (nick,pswd,isC) = if nick = data.username && pswd = data.password && isC = 1 then Some () else None
+            let (|WrongPassword|_|) (nick,pswd,_) = if nick = data.username && pswd <> data.password then Some () else None
+            let (|NotConfirmed|_|) (nick,pswd,_) = if nick = data.username && pswd = data.password then Some () else None
+
+            use! con = openConnection()
+            use com = con.CreateCommand()
+            com.CommandType <- CommandType.Text
+            com.CommandText <- "SELECT usersNew.pswd,usersNew.isConfirmed FROM usersNew WHERE usersNew.nick = @nick;"
+
+            let p1 = SqlParameter("@nick",SqlDbType.VarChar, 100)
+            p1.Value <- data.username
+
+            let p2 = SqlParameter("@pswd",SqlDbType.VarChar, 100)
+            p2.Value <- data.password
+
+            let! reader = com.ExecuteReaderAsync()
+            let r = 
+                if reader.Read() then
+                    let dat = reader.GetString(0),reader.GetString(1),reader.GetInt32(2)
+                    match dat with
+                    | ValidLogin -> Ok () 
+                    | WrongPassword -> Error WrongPassword
+                    | NotConfirmed -> Error AccountNotConfirmed
+                    | _ -> Error InternalServError
+                else
+                    Error WrongNick
+            return r
         }
 
 

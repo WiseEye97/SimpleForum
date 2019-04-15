@@ -1,10 +1,7 @@
 namespace Shared
 
-type Counter = { Value : int }
 
 module ClientMessages =
-
-    let x = 1
 
     type SignInMessage = {
         username : string
@@ -12,17 +9,37 @@ module ClientMessages =
         password : string
     }
 
+    type LogInMessage = {
+        username : string
+        password : string
+    }
+
 module ServerMessages =
 
-    type UserErros = 
+    type SignErrors = 
         | NickExists
         | EmailExists
         | InternalError
 
+    type LoginErrors =
+        | WrongNick
+        | WrongPassword
+        | AccountNotConfirmed
+        | InternalServError
+
+    type SimpleServerResponse<'e> = {
+        state : bool
+        errorMessage : 'e option 
+    }
+
     type SignInResponse = {
         state : bool
-        errorMessage : UserErros option 
+        errorMessage : SignErrors option 
     }
+
+    type LogInResponse = SimpleServerResponse<LoginErrors>
+
+
 
 module UserModel = 
     open System.Text.RegularExpressions

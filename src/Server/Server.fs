@@ -15,17 +15,16 @@ let publicPath = Path.GetFullPath "../Client/public"
 
 let port = "SERVER_PORT" |> tryGetEnv |> Option.map uint16 |> Option.defaultValue 8085us
 
-let getInitCounter() : Task<Counter> = task { return { Value = 42 } }
 
 let webApp = router {
-    get "/api/init" (fun next ctx ->
-        task {
-            let! counter = getInitCounter()
-            return! json counter next ctx
-        })
     post "/api/register" (fun next ctx ->
         task {
             let! action = Controllers.UserController.insertUser ctx.Request.Body
+            return! action next ctx
+        })
+    post "/api/login" (fun next ctx ->
+        task {
+            let! action = Controllers.UserController.loginUser ctx.Request.Body
             return! action next ctx
         })
 }
