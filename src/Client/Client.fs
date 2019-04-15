@@ -35,7 +35,6 @@ type Msg =
 | InitSign
 | InitLogin
 
-let initialCounter = fetchAs<Counter> "/api/init" (Decode.Auto.generateDecoder())
 
 // defines the initial state and initial command (= side-effect) of the application
 let init () : Model * Cmd<Msg> =

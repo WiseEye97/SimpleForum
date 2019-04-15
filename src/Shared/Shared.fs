@@ -32,10 +32,7 @@ module ServerMessages =
         errorMessage : 'e option 
     }
 
-    type SignInResponse = {
-        state : bool
-        errorMessage : SignErrors option 
-    }
+    type SignInResponse = SimpleServerResponse<SignErrors>
 
     type LogInResponse = SimpleServerResponse<LoginErrors>
 

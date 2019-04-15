@@ -26,7 +26,7 @@ type SignState =
     | Idle
     | Waiting
     | SignedOk
-    | SignedFailed of UserErros
+    | SignedFailed of SignErrors
 
 type Model = {
     userModel : User option
