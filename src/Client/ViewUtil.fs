@@ -107,6 +107,13 @@ let private createModal onClose content=
         ]
     ]
 
+let renderFormWithWarning inputs (onSubmit:OnSubmit) isLoading warningMessage =
+    div [] [
+        renderForm inputs onSubmit isLoading
+        p [] [str warningMessage]
+    ]
+    
+
 let signedOkPage onClose =
     createModal onClose "Signed successfully , Now you need to confirm you email"   
     

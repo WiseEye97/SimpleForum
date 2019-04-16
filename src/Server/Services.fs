@@ -50,3 +50,6 @@ module Services
 
     let insertUserService : Service = 
         insertUser DbHandler.UserDBController.insertUser JsonHelper.deserializeUserSignReq JsonHelper.serializeDbResult
+    
+    let loggerService message =
+        printfn "logging -> %A " message 
