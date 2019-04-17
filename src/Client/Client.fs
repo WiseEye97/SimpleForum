@@ -10,6 +10,8 @@ open Fable.PowerPack.Fetch
 open Thoth.Json
 
 open Shared
+open ViewUtil.NavHelper
+open ViewUtil
 
 // The model holds data that you want to keep track of while the application is running
 // in this case, we are keeping track of a counter
@@ -63,28 +65,22 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
 
 module MainLayout =
     let navbar {isLogged = isLogged} dispatch =
-        nav [ClassName "navbar";Role "navigation"] [
-             div [ClassName "navbar-end"] [
-                 div [ClassName "navbar-item"] [
-                     div [ClassName "buttons"] [
-                         match isLogged with
-                         | true -> 
-                            yield a [ClassName "button is-primary"] [
-                                str "Log Out"
-                            ]
-                         | _ -> yield! [
-                             a [ClassName "button is-primary";OnClick (fun _ -> dispatch InitSign)] [
-                                 str "Sign Up"
-                             ]
-                             a [ClassName "button is-light";OnClick (fun _ -> dispatch InitLogin)] [
-                                 str "Log In"
-                             ]    
-                         ]
-                             
-                     ]
-                  ]
-             ]   
-        ]
+        renderNavbar
+            [
+                match isLogged with
+                | true -> 
+                    yield! [
+                        Link {text = LinkText "LogOut";action = (fun _ -> dispatch InitSign);location = End}
+                    ]
+                | false ->
+                    yield! [
+                        Link {text = LinkText "Sign Up";action = (fun _ -> dispatch InitSign);location = End}
+                        Link {text = LinkText "Log In";action = (fun _ -> dispatch InitLogin);location = End}
+                    ]
+            ]
+            "https://images.techhive.com/images/article/2015/06/fsharp_logo-620x465-100588657-primary.idge.jpg"
+
+        
     let renderBody dispatch = 
         function
         | {subModel = Sign signModel} ->

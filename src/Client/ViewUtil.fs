@@ -12,6 +12,73 @@ type LabelText = LabelText of string
 type PlaceHolder = PlaceHolder of string
 type IconType = IconType of string
 
+module NavHelper =
+
+    type BrandUrl =  string
+    type LinkText = LinkText of string
+    type OnLinkClick = (unit -> unit)
+
+    type NavLocation =
+        | Start
+        | Middle
+        | End
+    
+    type NavLink = {
+        location : NavLocation
+        action : OnLinkClick
+        text : LinkText
+    }
+
+    type NavBarElementType = 
+        | Link of NavLink
+        | Menu
+
+
+    let renderNavbar (elems : seq<NavBarElementType>) (brand : BrandUrl)  =
+        let grouper =
+            function
+            | Link {location = l} -> l
+            | _ -> Start
+
+        let items = 
+            elems
+            |> Seq.groupBy grouper    
+            |> Seq.map (fun (k,sq) ->
+                sq
+                |> Seq.map (function
+                    | Link ({text = LinkText t} as l) ->
+                        a [ClassName "navbar-item";OnClick (fun _ -> l.action())] [
+                            str t
+                        ]
+                    | Menu -> div [] []
+                )
+                |> fun x -> (k,x)
+            )
+
+        let getLocation loc =
+            items
+            |> Seq.tryFind (fun (l,_) -> l = loc)
+            |> function
+               | Some x -> snd x   
+               | None -> Seq.empty
+
+
+        nav [ClassName "navbar";Role "navigation"] [
+            div [ClassName "navbar-brand"] [
+                div [ClassName "navbar-item"] [
+                    img [Src brand;ClassName "Logo"]        
+                ]
+            ]
+            div [ClassName "navbar-menu"] [
+               div [ClassName "navbar-start"] [
+                   yield! getLocation Start
+               ]
+               div [ClassName "navbar-end"] [
+                   yield! getLocation End
+               ]
+            ]
+        ]
+
 type ValidatorStyler = {
     isValid : bool
     onValid : string
@@ -28,7 +95,9 @@ type TextInput = {
 
 type InputType =
     | TextInput of TextInput
-    
+
+
+
 let renderForm inputs (onSubmit:OnSubmit) isLoading =
     let insertToField x =
         div [ClassName "field"] [
@@ -121,6 +190,6 @@ let signedFailedPage reason onClose =
     match reason with
     | NickExists -> "User with this name already exists"
     | EmailExists -> "Account with this email already exists"
-    | InternalError -> "Ooops internal server error please try later"
+    |  SignErrors.InternalError -> "Ooops internal server error please try later"
     |> createModal onClose
     

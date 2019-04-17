@@ -10,8 +10,8 @@ module userErrosDecoder =
         function
         | "NickExists" -> NickExists
         | "EmailExists" -> EmailExists
-        | "InternalError" -> InternalError
-        | _ -> InternalError
+        | "InternalError" -> SignErrors.InternalError
+        | _ -> SignErrors.InternalError
 
     let decodeLoginOpt =
         function
