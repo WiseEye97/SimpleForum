@@ -77,8 +77,10 @@ module MainLayout =
                         Link {text = LinkText "Sign Up";action = (fun _ -> dispatch InitSign);location = End}
                         Link {text = LinkText "Log In";action = (fun _ -> dispatch InitLogin);location = End}
                     ]
+                yield Link {text = LinkText "Blog";action = (fun _ -> ());location = Start}
+                yield Link {text = LinkText "About me";action = (fun _ -> ());location = Start}
             ]
-            "https://images.techhive.com/images/article/2015/06/fsharp_logo-620x465-100588657-primary.idge.jpg"
+            "https://upload.wikimedia.org/wikipedia/en/thumb/d/d5/Fsharp%2C_Logomark%2C_October_2014.svg/1200px-Fsharp%2C_Logomark%2C_October_2014.svg.png"
 
         
     let renderBody dispatch = 
