@@ -132,7 +132,7 @@ module UserDBController =
 
             return!
                 executeReader
-                    "SELECT usersNew.pswd,usersNew.isConfirmed FROM usersNew WHERE usersNew.nick = @nick;"
+                    "SELECT usersNew.nick,usersNew.pswd,usersNew.isConfirmed FROM usersNew WHERE usersNew.nick = @nick;"
                     [|
                         createParam "@nick" SqlDbType.VarChar 100 data.username
                         createParam "@pswd" SqlDbType.VarChar 100 data.password
@@ -152,6 +152,17 @@ module UserDBController =
                         }
                     )
                     InternalServError
+        }
+
+    let confirmUser (username : UserName) =
+        task{
+            return!
+                executeNonReader 
+                    "update usersNew set isConfirmed = 1 where nick = @nick;"
+                    [|
+                        createParam "@nick" SqlDbType.VarChar 100 (username.GetName())
+                    |]
+                    ConfirmErrors.InternalError
         }
 
 

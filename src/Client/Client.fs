@@ -76,7 +76,7 @@ module MainLayout =
                              a [ClassName "button is-primary";OnClick (fun _ -> dispatch InitSign)] [
                                  str "Sign Up"
                              ]
-                             a [ClassName "button is-light";OnClick (fun _ -> dispatch InitSign)] [
+                             a [ClassName "button is-light";OnClick (fun _ -> dispatch InitLogin)] [
                                  str "Log In"
                              ]    
                          ]

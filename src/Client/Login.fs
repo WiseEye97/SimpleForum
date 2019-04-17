@@ -43,7 +43,7 @@ let update (msg : Msg) (model:Model) =
     | Signed, _ ->  
         {model with loginState = Logging},PromiseSender.sendGenericJson<LogInResponse,Msg> {username = model.nickBuffer;password = model.passwordBuffer} 2 Decoders.userErrosDecoder.loginDecoder "/api/login" Logged Err
     | Logged {state = true;errorMessage = None},_ ->
-        model,[]
+        {model with loginState = Idle},[]
     | Logged {state = _;errorMessage = Some er},_ ->
         {model with loginState = LoginFailed er},[]
     | Logged {state = _;errorMessage = None},_ ->

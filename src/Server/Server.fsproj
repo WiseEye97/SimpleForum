@@ -6,10 +6,12 @@
   <ItemGroup>
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="Config.fs" />
+    <Compile Include="EmailSender.fs" />
     <Compile Include="DbHandler.fs" />
     <Compile Include="Models.fs" />
     <Compile Include="JsonHelper.fs" />
     <Compile Include="Services.fs" />
+    <Compile Include="ConfirmPage.fs" />
     <Compile Include="Controllers.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>

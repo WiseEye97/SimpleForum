@@ -16,6 +16,11 @@ let publicPath = Path.GetFullPath "../Client/public"
 let port = "SERVER_PORT" |> tryGetEnv |> Option.map uint16 |> Option.defaultValue 8085us
 
 
+let tryFetchQueryArg (collection : seq<System.Collections.Generic.KeyValuePair<string,'a>>) (arg:string) = 
+    collection
+    |> Seq.tryFind (fun kv -> kv.Key = arg)
+    |> Option.map (fun x -> x.Value)
+
 let webApp = router {
     post "/api/register" (fun next ctx ->
         task {
@@ -27,6 +32,14 @@ let webApp = router {
             let! action = Controllers.UserController.loginUser ctx.Request.Body
             return! action next ctx
         })
+    get "/api/confirm" (fun next ctx ->
+        task {
+            let arg = tryFetchQueryArg ctx.Request.Query "x" |> Option.map (fun x -> x.ToString())
+
+            let! action = Controllers.UserController.activateAccount arg
+            return! action next ctx
+        }
+    )
 }
 
 let configureSerialization (services:IServiceCollection) =

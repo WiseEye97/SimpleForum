@@ -27,6 +27,11 @@ module ServerMessages =
         | AccountNotConfirmed
         | InternalServError
 
+    type ConfirmErrors =
+        | UserNotFound
+        | InvalidUrl
+        | InternalError
+
     type SimpleServerResponse<'e> = {
         state : bool
         errorMessage : 'e option 
