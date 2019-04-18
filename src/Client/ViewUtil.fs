@@ -5,6 +5,7 @@ open Fable.Helpers.React.Props
 open Fable.Import.Browser
 open Shared.ServerMessages
 
+
 type OnSubmit = (unit -> unit)
 type OnChange = (string -> unit)
 
@@ -93,9 +94,31 @@ type TextInput = {
     placeholder : PlaceHolder
 }
 
+type RadioName = RadioName of string
+type RadioValue = {
+    value : string
+    onSelect : (unit -> unit)
+}
+
+type RadioInput = {
+    name : RadioName
+    values : seq<RadioValue>
+}
+
+type ButtonWithIcon = {
+    iconName : IconType
+    onClick : (unit -> unit)
+}
+
+type TextArea = {
+    onChange : OnChange
+}
+
 type InputType =
     | TextInput of TextInput
-
+    | RadioInput of RadioInput
+    | ButtonWithIcon of ButtonWithIcon
+    | TextArea of TextArea
 
 
 let renderForm inputs (onSubmit:OnSubmit) isLoading =
@@ -150,7 +173,33 @@ let renderForm inputs (onSubmit:OnSubmit) isLoading =
                     ]
                     renderHelperP validator
                 ]
-                
+            | RadioInput ({name = RadioName n} as r),_ ->
+                [
+                    div [ClassName "control"] [
+                        yield!
+                            r.values
+                            |> Seq.map (fun v ->
+                                label [ClassName "radio"] [
+                                    input [Type "radio";Name n;Value v.value;OnSelect (fun _ -> v.onSelect())]
+                                    p [] [str v.value]        
+                                ]
+                            )
+                    ]
+                ] 
+            | ButtonWithIcon {iconName = IconType n;onClick = onc},_ ->
+                [
+                    div [ClassName "control"] [
+                        a [ClassName "button";OnClick (fun _ -> onc())] [
+                            span [ClassName "icon"] [
+                                i [ClassName n] []
+                            ]
+                        ]
+                    ]
+                ]
+            | TextArea t, _ ->
+                [
+                    textarea [ClassName "textarea";OnChange (fun v -> v.Value |> t.onChange)] []
+                ]
                 ) >> insertToField)
         |> Seq.toList
     div [ClassName "columns is-mobile is-centered"] [

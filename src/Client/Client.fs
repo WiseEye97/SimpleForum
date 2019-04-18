@@ -21,6 +21,7 @@ open ViewUtil
 type SubModel =
     | Login of Login.Model
     | Sign of Sign.Model
+    | BlogWriter of WriteBlog.Model
     | Home
 
 type Model = {
@@ -34,8 +35,12 @@ type Msg =
 | Ignore
 | SignMsg of Sign.Msg
 | LoginMsg of Login.Msg
+| BlogWriterMsg of WriteBlog.Msg
 | InitSign
 | InitLogin
+| InitBlog
+| InitForum
+| InitBlogWriter
 
 
 // defines the initial state and initial command (= side-effect) of the application
@@ -55,9 +60,17 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
     | _ , InitSign -> 
         let signModel,signCmd = Sign.init()
         {currentModel with subModel = Sign signModel},Cmd.map SignMsg signCmd
+    | _ , InitBlogWriter ->
+        let writerModel,writerCmd = WriteBlog.init()
+        {currentModel with subModel = BlogWriter writerModel},Cmd.map BlogWriterMsg writerCmd
+    | {subModel = BlogWriter writerModel},BlogWriterMsg m ->
+        let writerModel,writerCmd = WriteBlog.update m writerModel
+        {currentModel with subModel = BlogWriter writerModel},Cmd.map BlogWriterMsg writerCmd
     | {subModel = Sign signModel},SignMsg msg ->
         let signModel,signCmd = Sign.update msg signModel
         {currentModel with subModel = Sign signModel},Cmd.map SignMsg signCmd
+    |  {subModel = Login loginModel},LoginMsg (Login.Msg.Logged {state = true;errorMessage = None}) -> 
+        {currentModel with isLogged = true},[]
     | {subModel = Login loginModel},LoginMsg msg ->
         let loginModel,loginCmd = Login.update msg loginModel
         {currentModel with subModel = Login loginModel},Cmd.map LoginMsg loginCmd
@@ -71,6 +84,8 @@ module MainLayout =
                 | true -> 
                     yield! [
                         Link {text = LinkText "LogOut";action = (fun _ -> dispatch InitSign);location = End}
+                        Link {text = LinkText "Forum";action = (fun _ -> dispatch InitForum);location = Start}
+                        Link {text = LinkText "Write Blog";action = (fun _ -> dispatch InitBlogWriter);location = Start}
                     ]
                 | false ->
                     yield! [
@@ -89,6 +104,8 @@ module MainLayout =
             Sign.view signModel (SignMsg >> dispatch)
         | {subModel = Login loginModel} ->
             Login.view loginModel (LoginMsg >> dispatch)
+        | {subModel = BlogWriter bg} ->
+            WriteBlog.view bg (BlogWriterMsg >> dispatch)
         | _ -> div [] []
 
 

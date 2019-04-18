@@ -10,6 +10,7 @@
     <Compile Include="Decoders.fs" />
     <Compile Include="Sign.fs" />
     <Compile Include="Login.fs" />
+    <Compile Include="WriteBlog.fs" />
     <Compile Include="Client.fs" />
   </ItemGroup>
   <ItemGroup>

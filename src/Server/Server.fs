@@ -38,6 +38,13 @@ let webApp = router {
 
             let! action = Controllers.UserController.activateAccount arg
             return! action next ctx
+        })
+      
+    get "/api/testAzure" (fun next ctx ->
+        task {
+            do! Controllers.AzureController.readFile()
+
+            return! text "" next ctx
         }
     )
 }
@@ -53,5 +60,6 @@ let app = application {
     service_config configureSerialization
     use_gzip
 }
+
 
 run app
