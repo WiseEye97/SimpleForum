@@ -83,17 +83,17 @@ module MainLayout =
                 match isLogged with
                 | true -> 
                     yield! [
-                        Link {text = LinkText "LogOut";action = (fun _ -> dispatch InitSign);location = End}
-                        Link {text = LinkText "Forum";action = (fun _ -> dispatch InitForum);location = Start}
-                        Link {text = LinkText "Write Blog";action = (fun _ -> dispatch InitBlogWriter);location = Start}
+                        Link {isActive = false;text = LinkText "LogOut";action = (fun _ -> dispatch InitSign);location = End}
+                        Link {isActive = false;text = LinkText "Forum";action = (fun _ -> dispatch InitForum);location = Start}
+                        Link {isActive = false;text = LinkText "Write Blog";action = (fun _ -> dispatch InitBlogWriter);location = Start}
                     ]
                 | false ->
                     yield! [
-                        Link {text = LinkText "Sign Up";action = (fun _ -> dispatch InitSign);location = End}
-                        Link {text = LinkText "Log In";action = (fun _ -> dispatch InitLogin);location = End}
+                        Link {isActive = false;text = LinkText "Sign Up";action = (fun _ -> dispatch InitSign);location = End}
+                        Link {isActive = false;text = LinkText "Log In";action = (fun _ -> dispatch InitLogin);location = End}
                     ]
-                yield Link {text = LinkText "Blog";action = (fun _ -> ());location = Start}
-                yield Link {text = LinkText "About me";action = (fun _ -> ());location = Start}
+                yield Link {isActive = false;text = LinkText "Blog";action = (fun _ -> ());location = Start}
+                yield Link {isActive = true;text = LinkText "About me";action = (fun _ -> ());location = Start}
             ]
             "https://upload.wikimedia.org/wikipedia/en/thumb/d/d5/Fsharp%2C_Logomark%2C_October_2014.svg/1200px-Fsharp%2C_Logomark%2C_October_2014.svg.png"
 

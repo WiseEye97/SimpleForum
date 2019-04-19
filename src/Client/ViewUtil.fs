@@ -4,6 +4,9 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import.Browser
 open Shared.ServerMessages
+open Fable.Core
+open Fable.Core.JsInterop
+open Fable.Import.Browser
 
 
 type OnSubmit = (unit -> unit)
@@ -28,6 +31,7 @@ module NavHelper =
         location : NavLocation
         action : OnLinkClick
         text : LinkText
+        isActive : bool
     }
 
     type NavBarElementType = 
@@ -48,7 +52,7 @@ module NavHelper =
                 sq
                 |> Seq.map (function
                     | Link ({text = LinkText t} as l) ->
-                        a [ClassName "navbar-item";OnClick (fun _ -> l.action())] [
+                        a [(if l.isActive then "is-active" else "") |> sprintf "navbar-item %s" |> ClassName;OnClick (fun _ -> l.action())] [
                             str t
                         ]
                     | Menu -> div [] []
@@ -64,7 +68,7 @@ module NavHelper =
                | None -> Seq.empty
 
 
-        nav [ClassName "navbar";Role "navigation"] [
+        nav [ClassName "navbar is-dark";Role "navigation"] [
             div [ClassName "navbar-brand"] [
                 div [ClassName "navbar-item"] [
                     img [Src brand;ClassName "Logo"]        
@@ -98,6 +102,7 @@ type RadioName = RadioName of string
 type RadioValue = {
     value : string
     onSelect : (unit -> unit)
+    isSelected : bool
 }
 
 type RadioInput = {
@@ -180,7 +185,7 @@ let renderForm inputs (onSubmit:OnSubmit) isLoading =
                             r.values
                             |> Seq.map (fun v ->
                                 label [ClassName "radio"] [
-                                    input [Type "radio";Name n;Value v.value;OnSelect (fun _ -> v.onSelect())]
+                                    input [Checked v.isSelected;Type "radio";Name n;Value v.value;OnClick (fun _ -> console.log("xxxx");v.onSelect())]
                                     p [] [str v.value]        
                                 ]
                             )
@@ -241,4 +246,37 @@ let signedFailedPage reason onClose =
     | EmailExists -> "Account with this email already exists"
     |  SignErrors.InternalError -> "Ooops internal server error please try later"
     |> createModal onClose
+
+module BlogParser =
+
+    let high : unit -> unit = import "parseCode" "./highlightCode.js" 
+    
+    let renderCode (s: string) =
+        pre [] [
+            code [ClassName "language-fsharp"] [
+                    str s
+            ]
+        ]
+        
+        
+    
+    let renderNormal (s:string) =
+        div [ClassName "content"] [
+            str s
+        ]
+    
+    let renderBlogWriter sections form  =
+
+        
+
+        div [ClassName "container"] [
+            div [] [
+                for sec in sections do
+                    yield sec
+                    yield div [ClassName "is-divider"] []
+            ]
+            form
+        ]
+    
+
     
