@@ -16,3 +16,11 @@ let sendGenericJson<'a,'b> content fields decoder url (onS : 'a -> 'b) onE =
         } 
 
         Cmd.ofPromise (fun _ -> cmd) () onS onE
+        
+let sendGet<'a,'b> decoder url (onS : 'a -> 'b) onE =
+        let cmd = promise{
+                let! res = Fetch.fetchAs<'a> url decoder []
+                return res
+        } 
+
+        Cmd.ofPromise (fun _ -> cmd) () onS onE

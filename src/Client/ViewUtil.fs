@@ -119,16 +119,38 @@ type TextArea = {
     onChange : OnChange
 }
 
+type DropDownItem = {
+    onClick : (unit -> unit)
+    name : string
+    isActive : bool
+}
+
+type DropDown = {
+    onExpand : unit -> unit
+    desc : string
+    isActive : bool
+    items : DropDownItem list
+}
+
+type InpWithButton = {
+    placeholder : PlaceHolder
+    name : string
+    onChange : string -> unit
+    onClick : unit -> unit
+}
+
 type InputType =
     | TextInput of TextInput
     | RadioInput of RadioInput
     | ButtonWithIcon of ButtonWithIcon
     | TextArea of TextArea
+    | DropDown of DropDown
+    | InpWithButton of InpWithButton
 
 
 let renderForm inputs (onSubmit:OnSubmit) isLoading =
-    let insertToField x =
-        div [ClassName "field"] [
+    let insertToField (x,hasAddons) =
+        div [(if hasAddons then "has-addons" else "") |> sprintf "field %s" |> ClassName] [
             yield! x        
         ]
 
@@ -177,7 +199,7 @@ let renderForm inputs (onSubmit:OnSubmit) isLoading =
                         | _ -> ()
                     ]
                     renderHelperP validator
-                ]
+                ],false
             | RadioInput ({name = RadioName n} as r),_ ->
                 [
                     div [ClassName "control"] [
@@ -190,7 +212,7 @@ let renderForm inputs (onSubmit:OnSubmit) isLoading =
                                 ]
                             )
                     ]
-                ] 
+                ],false 
             | ButtonWithIcon {iconName = IconType n;onClick = onc},_ ->
                 [
                     div [ClassName "control"] [
@@ -200,21 +222,54 @@ let renderForm inputs (onSubmit:OnSubmit) isLoading =
                             ]
                         ]
                     ]
-                ]
+                ],false
             | TextArea t, _ ->
                 [
                     textarea [ClassName "textarea";OnChange (fun v -> v.Value |> t.onChange)] []
-                ]
+                ],false
+            | DropDown d,_ ->
+                [
+                    div [(if d.isActive then "is-active" else "") |> sprintf "dropdown %s" |> ClassName] [
+                        div [ClassName "dropdown-trigger"] [
+                            button [ClassName "button";AriaHasPopup true;OnClick (fun _ -> d.onExpand())] [
+                                span [] [str d.desc]
+                                span [ClassName "icon is-small"] [
+                                    i [ClassName "fas fa-angle-down"] []
+                                ]
+                            ]
+                        ]
+
+                        div [ClassName "dropdown-menu";Role "menu"] [
+                            div [ClassName "dropdown-content"] [
+                                for item in d.items ->
+                                    a [OnClick (fun _ -> item.onClick());(if item.isActive then "is-active" else "") |> sprintf "dropdown-item %s" |> ClassName] [
+                                        str item.name
+                                    ]        
+                            ]
+                        ]
+                    ]
+                ],false
+            | InpWithButton ({placeholder = PlaceHolder p} as x),_ ->
+                [
+                    div [ClassName "control"] [
+                        input [OnChange (fun v -> v.Value |> x.onChange);ClassName "input";Type "text";Placeholder p]
+                    ]
+                    div [ClassName "control"] [
+                        a [OnClick (fun _ -> x.onClick());ClassName "button is-info"] [
+                            str x.name
+                        ]
+                    ]
+                ],true
                 ) >> insertToField)
         |> Seq.toList
     div [ClassName "columns is-mobile is-centered"] [
         div [ClassName "column is-half form"] [
             yield! renderedInputs
-            yield [div [ClassName "control"] [
+            yield ([div [ClassName "control"] [
                 button [OnClick (fun _ -> onSubmit());(if isLoading then "is-loading" else "") |> sprintf "button is-link %s" |> ClassName] [
                     str "Submit"        
                 ]
-            ]]
+            ]],false)
             |> insertToField
         ]
     ]
@@ -258,8 +313,6 @@ module BlogParser =
             ]
         ]
         
-        
-    
     let renderNormal (s:string) =
         div [ClassName "content"] [
             str s

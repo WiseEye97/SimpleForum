@@ -7,6 +7,8 @@ open FSharp.Control.Tasks
 open System.Threading.Tasks
 open System.Text
 open System.Threading
+open Giraffe.HttpStatusCodeHandlers
+
 
     type PostData = Stream
     type QueryData = string option
@@ -30,8 +32,16 @@ open System.Threading
                 return htmlView (ConfirmPage.index resp)
             }
 
+    module BlogController =
+        open Shared.ClientMessages
+        
+        let insertBlog (blog : NewBlog) =
+            
+            ()
+
     module AzureController =
         open Microsoft.Azure // Namespace for Azure Configuration Manager
+        open Shared.ClientMessages 
         open Microsoft.WindowsAzure.Storage // Namespace for Storage Client Library
         open Microsoft.WindowsAzure.Storage.Blob // Namespace for Azure Blobs
         open Microsoft.WindowsAzure.Storage.File // Namespace for Azure Files
@@ -58,10 +68,31 @@ open System.Threading
         let readFile() = 
             task{
                 let rootDir = share.GetRootDirectoryReference()
-                let file = rootDir.GetFileReference "test.txt"
+                let ff = rootDir.GetDirectoryReference "Wprowadzenie F"
+
+                let file = ff.GetFileReference "Hello F#2"
                 let! content = file.DownloadTextAsync()
                 printfn "content -> %s" content
             }
+        
+        let createCategory (dirname:string option) = 
+            task {
+                let! resp = Services.createCategoryService dirname
+                return text resp
+            }
+        
+        let getAllCategories() = 
+            task {
+                let! r = Services.getAllCategoriesService()
+                if r.IsSome then
+                    return Some(text r.Value)
+                else
+                    return None
+            }
+
+        let insertBlog (blog : NewBlog) =
+            ()
+            
         
 
         

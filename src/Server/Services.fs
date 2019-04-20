@@ -7,15 +7,19 @@ module Services
     open System.Threading.Tasks
     open FSharp.Control.Tasks.V2
     open System.Threading.Tasks
+    open JsonHelper
 
     type Service = (Stream -> Task<string>)
     type QueryService = (string option -> Task<string>)
+
+    type DbService<'a,'b> = 'a -> Task<'b>
 
     type JsonDeserializer<'a> = (Stream -> 'a option)
     type DbUserService<'a> = User -> Task<'a>
     type DbLoginService<'a> = LogInMessage -> Task<'a>
     type DbConfirmService = UserName -> Task<Result<unit,ConfirmErrors>>
 
+    type DbBlogPostService<'a> = NewBlog -> Task<'a>
 
     type DbResp = Result<unit, SignErrors>
     type DbLoginRespr = Result<unit, LoginErrors>
@@ -23,6 +27,22 @@ module Services
     type DbJsonSerializer<'a> = 'a -> string
 
     type EmailService = User -> Task
+
+
+    let private genericService<'a,'b> (dbService : DbService<'a,'b>) (deser : JsonDeserializer<'a>) (dbSerializer : DbJsonSerializer<'b>) (onDeserFail : (unit -> string)) (request : Stream) =
+        request
+        |> deser
+        |> function
+            | Some x -> 
+                task {
+                    let! r = x |> dbService
+                    return (r |> dbSerializer)
+                }
+            | None -> 
+                task {
+                    return onDeserFail()
+                }
+
 
     let private insertUser (emailService:EmailService) (db : DbUserService<DbResp>) (deser : JsonDeserializer<User>) (serializer : DbJsonSerializer<DbResp>) (request:Stream) =
         request
@@ -65,6 +85,7 @@ module Services
             | _ -> return Error InvalidUrl
         }
 
+    
     let loginUserService : Service =
         loginUser DbHandler.UserDBController.loginUser JsonHelper.deserializeLoginReq JsonHelper.serializeDbResult
 
@@ -76,3 +97,41 @@ module Services
 
     let loggerService message =
         printfn "logging -> %A " message 
+    
+    let private insertPost (deser : JsonDeserializer<NewBlog>) (db:DbBlogPostService<int>) (request:Stream) =
+        task{
+            return!
+                request
+                |> deser
+                |> function
+                    | Some _ ->
+                        task {return ""}
+                    | None -> 
+                        task {return ""}
+        }
+
+    let private createCategory (azureService : (string -> Task<Result<unit,BlogPostErrors>>)) (categoryName:string option) =
+        task{
+            match categoryName with
+            | Some x ->
+                let! r =  x |> azureService
+                return r |> serializeDbResult<BlogPostErrors>
+            | None -> 
+                return WrongUrl |> Error |> serializeDbResult<BlogPostErrors>
+        }
+    
+    let private getAllCategories (azureService : unit -> Task<Result<string array,BlogPostErrors>>) = 
+        task{
+            let! r = azureService()
+            return
+                r 
+                |> serializeFetch<string array,BlogPostErrors>
+               
+        }
+    let getAllCategoriesService() = getAllCategories AzureHandler.getAllCategories 
+
+    let createCategoryService = 
+        createCategory AzureHandler.createCategory
+
+    //let insertPostService : Service =
+    //    genericService<NewBlog,BlogPostErrors> 

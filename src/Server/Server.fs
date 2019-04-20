@@ -7,6 +7,7 @@ open FSharp.Control.Tasks.V2
 open Giraffe
 open Saturn
 open Shared
+open Saturn.ControllerHelpers
 
 
 let tryGetEnv = System.Environment.GetEnvironmentVariable >> function null | "" -> None | x -> Some x
@@ -39,11 +40,33 @@ let webApp = router {
             let! action = Controllers.UserController.activateAccount arg
             return! action next ctx
         })
-      
+
+    get "/api/addCategory" (fun next ctx ->
+        task {
+            let arg = tryFetchQueryArg ctx.Request.Query "cat" |> Option.map (fun x -> x.ToString())
+            let! action = Controllers.AzureController.createCategory arg
+            return! action next ctx
+        })
+
+    get "/api/getCategories" (fun next ctx -> 
+        task {
+           let! categories = Controllers.AzureController.getAllCategories()
+           match categories with
+           | Some c -> return! c next ctx 
+           | _ -> return! RequestErrors.badRequest (text "klops") next ctx      
+        }
+    )
     get "/api/testAzure" (fun next ctx ->
         task {
-            do! Controllers.AzureController.readFile()
-
+            let! _ =  AzureHandler.xmlToBlog "Wprowadzenie F" "Hello F#2"
+            return! text "" next ctx
+        })
+        
+    post "/api/sendBlog" (fun next ctx ->
+        task {
+            let! model = Controller.getJson<Shared.ClientMessages.NewBlog> ctx
+            printfn "model -> %A" model
+            do! AzureHandler.insertBlog model    
             return! text "" next ctx
         }
     )

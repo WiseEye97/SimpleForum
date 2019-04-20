@@ -20,6 +20,11 @@ module userErrosDecoder =
         | "InternalServError" -> InternalServError
         | "AccountNotConfirmed" -> AccountNotConfirmed
         | _ -> InternalServError
+    
+    let decodeBlogOpt =
+        function 
+        | "CantAccesServer" -> CantAccesServer
+        | _ -> CantAccesServer
 
     let decodeOptionError  : string -> obj -> Result<SignErrors array,Decode.DecoderError> =
         Decode.field "Fields" (Decode.array (Decode.map decodeSignOpt (Decode.field "Case" Decode.string)))
@@ -56,6 +61,7 @@ module userErrosDecoder =
           mapper  
           (Decode.field "state" Decode.bool)
           (Decode.field "errorMessage" (Decode.oneOf [decodeErrorMsgWith<'a> optionDecoder;Decode.nil None])) 
-
+    
     let loginDecoder : string -> obj -> Result<SimpleServerResponse<LoginErrors>,Decode.DecoderError> = SimpleServerResponseDecoder<LoginErrors> (fun x y -> {state = x;errorMessage = y}) decodeLoginOpt
-    let signinDecoder : string -> obj -> Result<SimpleServerResponse<SignErrors>,Decode.DecoderError> = SimpleServerResponseDecoder<SignErrors> (fun x y -> {state = x;errorMessage = y}) decodeSignOpt 
+    let signinDecoder : string -> obj -> Result<SimpleServerResponse<SignErrors>,Decode.DecoderError> = SimpleServerResponseDecoder<SignErrors> (fun x y -> {state = x;errorMessage = y}) decodeSignOpt
+    let newCategoryDecoder : string -> obj -> Result<SimpleServerResponse<BlogPostErrors>,Decode.DecoderError> = SimpleServerResponseDecoder<BlogPostErrors> (fun x y -> {state = x;errorMessage = y}) decodeBlogOpt  

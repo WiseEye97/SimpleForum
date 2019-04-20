@@ -14,6 +14,22 @@ module ClientMessages =
         password : string
     }
 
+    type TextType =
+    | Normal
+    | Code
+
+
+    type TextSection = {
+        content : string
+        tp : TextType
+    }
+    
+    type NewBlog = {
+        category : string
+        topic : string
+        sections : TextSection list
+    }
+
 module ServerMessages =
 
     type SignErrors = 
@@ -32,15 +48,18 @@ module ServerMessages =
         | InvalidUrl
         | InternalError
 
+    type BlogPostErrors =
+        | CantAccesServer
+        | WrongUrl
+
     type SimpleServerResponse<'e> = {
         state : bool
         errorMessage : 'e option 
     }
 
     type SignInResponse = SimpleServerResponse<SignErrors>
-
     type LogInResponse = SimpleServerResponse<LoginErrors>
-
+    type AddCategoryResponse = SimpleServerResponse<BlogPostErrors>
 
 
 module UserModel = 
