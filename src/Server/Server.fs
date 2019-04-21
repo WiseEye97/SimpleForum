@@ -8,6 +8,8 @@ open Giraffe
 open Saturn
 open Shared
 open Saturn.ControllerHelpers
+open Shared.ClientMessages
+open Shared.UserModel
 
 
 let tryGetEnv = System.Environment.GetEnvironmentVariable >> function null | "" -> None | x -> Some x
@@ -30,7 +32,10 @@ let webApp = router {
         })
     post "/api/login" (fun next ctx ->
         task {
-            let! action = Controllers.UserController.loginUser ctx.Request.Body
+            let! model = Controller.getJson<LogInMessage> ctx
+            
+            let! action = Controllers.UserController.loginUser model
+
             return! action next ctx
         })
     get "/api/confirm" (fun next ctx ->

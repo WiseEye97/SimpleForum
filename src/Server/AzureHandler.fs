@@ -61,7 +61,7 @@ module AzureHandler
                 task{
                     let! r = reader.ReadAsync()
                     if r then
-                        //printfn "rn -> %s type -> %A" reader.Name reader.NodeType 
+                      
                         match reader.NodeType with
                         | XmlNodeType.Element ->
                             return! loop res reader.Name

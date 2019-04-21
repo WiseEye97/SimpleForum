@@ -1,7 +1,6 @@
 module ConfirmPage
 
 open Giraffe.GiraffeViewEngine
-open Saturn
 open Shared.ServerMessages
 
 let index (res:Result<unit,Shared.ServerMessages.ConfirmErrors>) =

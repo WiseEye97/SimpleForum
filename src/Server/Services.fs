@@ -62,19 +62,12 @@ module Services
                     return {state = false;errorMessage = None} |> JsonHelper.serialize
                 }
 
-    let private loginUser (db : DbLoginService<DbLoginRespr>) (deser : JsonDeserializer<LogInMessage>) (serializer : DbJsonSerializer<DbLoginRespr>) (request:Stream) =
-        request
-        |> deser
-        |> function
-            | Some loginMsg -> 
-                task {
-                    let! r = loginMsg |> db
-                    return (r |> serializer)
-                }
-            | None -> 
-                task {
-                    return {state = false;errorMessage = None} |> JsonHelper.serialize
-                }
+    let private loginUser (db : DbLoginService<DbLoginRespr>) (serializer : DbJsonSerializer<DbLoginRespr>) (model:LogInMessage) =
+        task {
+                let! r = model |> db
+                return (r |> serializer)
+        }
+           
 
     let private confirmUser (db : DbConfirmService) (user: string option) =
         task {
@@ -86,29 +79,14 @@ module Services
         }
 
     
-    let loginUserService : Service =
-        loginUser DbHandler.UserDBController.loginUser JsonHelper.deserializeLoginReq JsonHelper.serializeDbResult
+    let loginUserService =
+        loginUser DbHandler.UserDBController.loginUser JsonHelper.serializeDbResult
 
     let insertUserService : Service = 
         insertUser EmailSender.sendActivationEmail DbHandler.UserDBController.insertUser JsonHelper.deserializeUserSignReq JsonHelper.serializeDbResult
     
     let confirmUserService  =
         confirmUser DbHandler.UserDBController.confirmUser
-
-    let loggerService message =
-        printfn "logging -> %A " message 
-    
-    let private insertPost (deser : JsonDeserializer<NewBlog>) (db:DbBlogPostService<int>) (request:Stream) =
-        task{
-            return!
-                request
-                |> deser
-                |> function
-                    | Some _ ->
-                        task {return ""}
-                    | None -> 
-                        task {return ""}
-        }
 
     let private createCategory (azureService : (string -> Task<Result<unit,BlogPostErrors>>)) (categoryName:string option) =
         task{
@@ -128,10 +106,8 @@ module Services
                 |> serializeFetch<string array,BlogPostErrors>
                
         }
+
     let getAllCategoriesService() = getAllCategories AzureHandler.getAllCategories 
 
     let createCategoryService = 
         createCategory AzureHandler.createCategory
-
-    //let insertPostService : Service =
-    //    genericService<NewBlog,BlogPostErrors> 

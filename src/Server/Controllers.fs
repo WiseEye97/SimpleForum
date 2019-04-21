@@ -2,27 +2,22 @@ module Controllers
 
 open System.IO
 open Giraffe
-open FSharp.Control.Tasks.V2
 open FSharp.Control.Tasks
-open System.Threading.Tasks
-open System.Text
-open System.Threading
-open Giraffe.HttpStatusCodeHandlers
-
 
     type PostData = Stream
     type QueryData = string option
 
     module UserController =
-        
+        open Shared.ClientMessages
+
         let insertUser (requestStream : PostData) =
             task {
                 let! resp = Services.insertUserService requestStream
                 return text resp
             }
-        let loginUser (requestStream : PostData) = 
+        let loginUser (loginData : LogInMessage) = 
             task {
-                let! resp = Services.loginUserService requestStream
+                let! resp = Services.loginUserService loginData
                 return text resp
             }
         
@@ -32,49 +27,8 @@ open Giraffe.HttpStatusCodeHandlers
                 return htmlView (ConfirmPage.index resp)
             }
 
-    module BlogController =
-        open Shared.ClientMessages
-        
-        let insertBlog (blog : NewBlog) =
-            
-            ()
-
     module AzureController =
-        open Microsoft.Azure // Namespace for Azure Configuration Manager
-        open Shared.ClientMessages 
-        open Microsoft.WindowsAzure.Storage // Namespace for Storage Client Library
-        open Microsoft.WindowsAzure.Storage.Blob // Namespace for Azure Blobs
-        open Microsoft.WindowsAzure.Storage.File // Namespace for Azure Files
-
-        let storageAccount = CloudStorageAccount.Parse Config.azureConnection
-
-        let fileClient = storageAccount.CreateCloudFileClient()
-
-        let share = fileClient.GetShareReference "forum"
-
-        let insertToFile (content:string) (filename:string) =
-                task {
-                    let! exists = share.ExistsAsync()
-
-                    if exists then
-                        let rootDir = share.GetRootDirectoryReference()
-                        let file = rootDir.GetFileReference filename
-                        do! file.UploadTextAsync content
-                    else
-                        printfn "do not exists"
-                    return ()
-                }
-                
-        let readFile() = 
-            task{
-                let rootDir = share.GetRootDirectoryReference()
-                let ff = rootDir.GetDirectoryReference "Wprowadzenie F"
-
-                let file = ff.GetFileReference "Hello F#2"
-                let! content = file.DownloadTextAsync()
-                printfn "content -> %s" content
-            }
-        
+         
         let createCategory (dirname:string option) = 
             task {
                 let! resp = Services.createCategoryService dirname
@@ -90,8 +44,6 @@ open Giraffe.HttpStatusCodeHandlers
                     return None
             }
 
-        let insertBlog (blog : NewBlog) =
-            ()
             
         
 

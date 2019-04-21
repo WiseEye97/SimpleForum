@@ -1,17 +1,11 @@
 module Sign
 
 open Elmish
-open Elmish.React
-open UserModel
 open ViewUtil
 open Fable.Import.Browser
-open Fable.PowerPack.Fetch
-open Fable.PowerPack
 open Shared
 open Shared.UserModel
 open Shared.ServerMessages
-open Thoth.Json
-open Thoth.Elmish.FormBuilder.Types
 
 type IsValidInput =
     | Valid
@@ -71,7 +65,7 @@ module Sender =
         | {username = usr;email = em;password = pswd} ->
             let message = {ClientMessages.SignInMessage.username = usr.GetName();ClientMessages.SignInMessage.email = em.GetStringEmail();ClientMessages.SignInMessage.password = pswd.GetPswd()}
 
-            PromiseSender.sendGenericJson<ServerMessages.SignInResponse,Msg> message 3 Decoders.userErrosDecoder.ServerResponseDecoder "/api/register" ServerResponse Err
+            PromiseSender.sendGenericJson<ServerMessages.SignInResponse,Msg> message 3 Decoders.userErrosDecoder.signinDecoder "/api/register" ServerResponse Err
             |> Some
 
 
