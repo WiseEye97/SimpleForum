@@ -44,6 +44,16 @@ open FSharp.Control.Tasks
                     return None
             }
 
+        let getBlogsFromCategory (cat:string) =
+            task {
+                let! blogs = Services.getBlogsFromCategoryService cat
+                if blogs.IsSome then
+                    return Some(text blogs.Value)
+                else 
+                    return None
+            }
+            
+
             
         
 

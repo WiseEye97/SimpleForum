@@ -22,6 +22,7 @@ type SubModel =
     | Login of Login.Model
     | Sign of Sign.Model
     | BlogWriter of WriteBlog.Model
+    | Blog of Blog.Model
     | Home
 
 type Model = {
@@ -36,6 +37,7 @@ type Msg =
 | SignMsg of Sign.Msg
 | LoginMsg of Login.Msg
 | BlogWriterMsg of WriteBlog.Msg
+| BlogMsg of Blog.Msg
 | InitSign
 | InitLogin
 | InitBlog
@@ -54,6 +56,9 @@ let init () : Model * Cmd<Msg> =
 // these commands in turn, can dispatch messages to which the update function will react.
 let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
     match currentModel, msg with
+    | _ , InitBlog ->
+        let blogModel,blogCmd = Blog.init()
+        {currentModel with subModel = Blog blogModel},Cmd.map BlogMsg blogCmd
     | _ , InitLogin ->
         let loginModel,loginCmd = Login.init()
         {currentModel with subModel = Login loginModel},Cmd.map LoginMsg loginCmd
@@ -63,6 +68,9 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
     | _ , InitBlogWriter ->
         let writerModel,writerCmd = WriteBlog.init()
         {currentModel with subModel = BlogWriter writerModel},Cmd.map BlogWriterMsg writerCmd
+    | {subModel = Blog bg},BlogMsg m ->
+        let blogModel,blogCmd = Blog.update m bg
+        {currentModel with subModel = Blog blogModel},Cmd.map BlogMsg blogCmd
     | {subModel = BlogWriter writerModel},BlogWriterMsg m ->
         let writerModel,writerCmd = WriteBlog.update m writerModel
         {currentModel with subModel = BlogWriter writerModel},Cmd.map BlogWriterMsg writerCmd
@@ -92,7 +100,7 @@ module MainLayout =
                         Link {isActive = false;text = LinkText "Sign Up";action = (fun _ -> dispatch InitSign);location = End}
                         Link {isActive = false;text = LinkText "Log In";action = (fun _ -> dispatch InitLogin);location = End}
                     ]
-                yield Link {isActive = false;text = LinkText "Blog";action = (fun _ -> ());location = Start}
+                yield Link {isActive = false;text = LinkText "Blog";action = (fun _ -> dispatch InitBlog);location = Start}
                 yield Link {isActive = true;text = LinkText "About me";action = (fun _ -> ());location = Start}
             ]
             "https://upload.wikimedia.org/wikipedia/en/thumb/d/d5/Fsharp%2C_Logomark%2C_October_2014.svg/1200px-Fsharp%2C_Logomark%2C_October_2014.svg.png"
@@ -106,6 +114,8 @@ module MainLayout =
             Login.view loginModel (LoginMsg >> dispatch)
         | {subModel = BlogWriter bg} ->
             WriteBlog.view bg (BlogWriterMsg >> dispatch)
+        | {subModel = Blog bg} ->
+            Blog.view bg (BlogMsg >> dispatch)
         | _ -> div [] []
 
 

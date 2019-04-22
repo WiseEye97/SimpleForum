@@ -16,6 +16,40 @@ type LabelText = LabelText of string
 type PlaceHolder = PlaceHolder of string
 type IconType = IconType of string
 
+module Tabs = 
+    type TabItem = {
+        isActive : bool
+        name : string
+        onSelect : (unit -> unit)
+    }
+
+    let renderTab (items:seq<TabItem>) =
+        div [ClassName "tabs"] [
+            ul [] [
+               for item in items ->
+                  li [if item.isActive then yield (ClassName "is-active")] [
+                      a [OnClick (fun _ -> item.onSelect())] [str item.name]
+                  ]  
+            ]
+        ]
+
+module Lists =
+
+    type ListItem = {
+        name : string
+        onClick : (unit -> unit)
+    }
+
+    let renderList (items:seq<ListItem>) =
+        ul []
+            [
+               for item in items ->
+                    li [OnClick (fun _ -> item.onClick())] [
+                        a [] [str item.name]        
+                    ]
+            ] 
+        
+
 module NavHelper =
 
     type BrandUrl =  string
@@ -146,6 +180,7 @@ type InputType =
     | TextArea of TextArea
     | DropDown of DropDown
     | InpWithButton of InpWithButton
+
 
 
 let renderForm inputs (onSubmit:OnSubmit) isLoading =
@@ -320,8 +355,6 @@ module BlogParser =
     
     let renderBlogWriter sections form  =
 
-        
-
         div [ClassName "container"] [
             div [] [
                 for sec in sections do
@@ -331,5 +364,9 @@ module BlogParser =
             form
         ]
     
+let renderBlogSelector tab blogs =
+    div [ClassName "container"] [
+        tab
+        blogs
+    ]
 
-    

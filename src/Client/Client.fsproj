@@ -4,13 +4,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Shared/Shared.fs" />
-    <Compile Include="UserModel.fs" />
     <Compile Include="ViewUtil.fs" />
     <Compile Include="PromiseSender.fs" />
     <Compile Include="Decoders.fs" />
     <Compile Include="Sign.fs" />
     <Compile Include="Login.fs" />
     <Compile Include="WriteBlog.fs" />
+    <Compile Include="Blog.fs" />
     <Compile Include="Client.fs" />
   </ItemGroup>
   <ItemGroup>

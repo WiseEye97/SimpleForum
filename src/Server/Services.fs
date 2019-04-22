@@ -107,6 +107,16 @@ module Services
                
         }
 
+    let private getBlogsFromCategory (azureService : string -> Task<string array>) (category : string) =
+        task{
+            let! res = category |> azureService
+            let str = res |> Ok |> serializeFetch<string array,BlogPostErrors>
+            return str
+        }
+
+    let getBlogsFromCategoryService  = 
+        getBlogsFromCategory AzureHandler.getBlogsFromCategory 
+
     let getAllCategoriesService() = getAllCategories AzureHandler.getAllCategories 
 
     let createCategoryService = 

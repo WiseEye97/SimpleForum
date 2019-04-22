@@ -45,6 +45,18 @@ module AzureHandler
             return Ok dirs
         }
 
+    let getBlogsFromCategory (category:string) =
+        task {
+            let rootDir = share.GetRootDirectoryReference()
+            let catDir = rootDir.GetDirectoryReference category
+            let! contents = catDir.ListFilesAndDirectoriesSegmentedAsync (FileContinuationToken())
+            let files = contents.Results
+                            .OfType<CloudFile>()
+                            .Select(fun x -> x.Name)
+                            .ToArray()
+            return files
+        }
+
     let xmlToBlog (category:string) (title:string) =
         task{
             let rootDir = share.GetRootDirectoryReference()

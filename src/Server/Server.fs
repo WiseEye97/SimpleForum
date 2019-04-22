@@ -46,6 +46,18 @@ let webApp = router {
             return! action next ctx
         })
 
+    get "/api/getBlogs" (fun next ctx ->
+        task {
+            let arg = tryFetchQueryArg ctx.Request.Query "cat" |> Option.map (fun x -> x.ToString())
+            if arg.IsSome then    
+                let! action = Controllers.AzureController.getBlogsFromCategory arg.Value
+                match action with
+                | Some x -> return! x next ctx 
+                | None -> return! RequestErrors.CONFLICT (text "klops") next ctx
+            else
+                return! RequestErrors.badRequest (text "klops") next ctx
+        })
+
     get "/api/addCategory" (fun next ctx ->
         task {
             let arg = tryFetchQueryArg ctx.Request.Query "cat" |> Option.map (fun x -> x.ToString())
