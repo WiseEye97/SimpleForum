@@ -32,17 +32,27 @@ type Model = {
 
 // The Msg type defines what events/actions can occur while the application is running
 // the state of the application changes *only* in reaction to these events
-type Msg =
-| Ignore
-| SignMsg of Sign.Msg
-| LoginMsg of Login.Msg
-| BlogWriterMsg of WriteBlog.Msg
-| BlogMsg of Blog.Msg
+
+type InitMsg = 
 | InitSign
 | InitLogin
 | InitBlog
 | InitForum
 | InitBlogWriter
+
+type SubModelMsg =
+| SignMsg of Sign.Msg
+| LoginMsg of Login.Msg
+| BlogWriterMsg of WriteBlog.Msg
+| BlogMsg of Blog.Msg
+
+
+
+type Msg =
+| Ignore
+| SubModelMsg of SubModelMsg
+| InitMsg of InitMsg
+
 
 
 // defines the initial state and initial command (= side-effect) of the application
@@ -55,33 +65,46 @@ let init () : Model * Cmd<Msg> =
 // It can also run side-effects (encoded as commands) like calling the server via Http.
 // these commands in turn, can dispatch messages to which the update function will react.
 let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
+
+    let initUpdate (model : Model) (msg : InitMsg) =
+        match model,msg with
+        | _ , InitBlog ->
+            let blogModel,blogCmd = Blog.init()
+            {currentModel with subModel = Blog blogModel},Cmd.map BlogMsg blogCmd
+        | _ , InitLogin ->
+            let loginModel,loginCmd = Login.init()
+            {currentModel with subModel = Login loginModel},Cmd.map LoginMsg loginCmd
+        | _ , InitSign -> 
+            let signModel,signCmd = Sign.init()
+            {currentModel with subModel = Sign signModel},Cmd.map SignMsg signCmd
+        | _ , InitBlogWriter ->
+            let writerModel,writerCmd = WriteBlog.init()
+            {currentModel with subModel = BlogWriter writerModel},Cmd.map BlogWriterMsg writerCmd
+
+    let subUpdate (model : Model) (msg : SubModelMsg) =
+        match model,msg with
+        | {subModel = Blog bg},BlogMsg m ->
+            let blogModel,blogCmd = Blog.update m bg
+            {currentModel with subModel = Blog blogModel},Cmd.map BlogMsg blogCmd
+        | {subModel = BlogWriter writerModel},BlogWriterMsg m ->
+            let writerModel,writerCmd = WriteBlog.update m writerModel
+            {currentModel with subModel = BlogWriter writerModel},Cmd.map BlogWriterMsg writerCmd
+        | {subModel = Sign signModel},SignMsg msg ->
+            let signModel,signCmd = Sign.update msg signModel
+            {currentModel with subModel = Sign signModel},Cmd.map SignMsg signCmd
+        |  {subModel = Login loginModel},LoginMsg (Login.Msg.Logged {state = true;errorMessage = None}) -> 
+            {currentModel with isLogged = true},[]
+        | {subModel = Login loginModel},LoginMsg msg ->
+            let loginModel,loginCmd = Login.update msg loginModel
+            {currentModel with subModel = Login loginModel},Cmd.map LoginMsg loginCmd
+
     match currentModel, msg with
-    | _ , InitBlog ->
-        let blogModel,blogCmd = Blog.init()
-        {currentModel with subModel = Blog blogModel},Cmd.map BlogMsg blogCmd
-    | _ , InitLogin ->
-        let loginModel,loginCmd = Login.init()
-        {currentModel with subModel = Login loginModel},Cmd.map LoginMsg loginCmd
-    | _ , InitSign -> 
-        let signModel,signCmd = Sign.init()
-        {currentModel with subModel = Sign signModel},Cmd.map SignMsg signCmd
-    | _ , InitBlogWriter ->
-        let writerModel,writerCmd = WriteBlog.init()
-        {currentModel with subModel = BlogWriter writerModel},Cmd.map BlogWriterMsg writerCmd
-    | {subModel = Blog bg},BlogMsg m ->
-        let blogModel,blogCmd = Blog.update m bg
-        {currentModel with subModel = Blog blogModel},Cmd.map BlogMsg blogCmd
-    | {subModel = BlogWriter writerModel},BlogWriterMsg m ->
-        let writerModel,writerCmd = WriteBlog.update m writerModel
-        {currentModel with subModel = BlogWriter writerModel},Cmd.map BlogWriterMsg writerCmd
-    | {subModel = Sign signModel},SignMsg msg ->
-        let signModel,signCmd = Sign.update msg signModel
-        {currentModel with subModel = Sign signModel},Cmd.map SignMsg signCmd
-    |  {subModel = Login loginModel},LoginMsg (Login.Msg.Logged {state = true;errorMessage = None}) -> 
-        {currentModel with isLogged = true},[]
-    | {subModel = Login loginModel},LoginMsg msg ->
-        let loginModel,loginCmd = Login.update msg loginModel
-        {currentModel with subModel = Login loginModel},Cmd.map LoginMsg loginCmd
+    | _ , InitMsg m ->
+        let md,cmd = initUpdate currentModel m
+        md, Cmd.map SubModelMsg cmd
+    | _ , SubModelMsg m -> 
+        let md,cmd = subUpdate currentModel m
+        md, Cmd.map SubModelMsg cmd
     | _ , _ -> currentModel,[]
 
 module MainLayout =
@@ -121,8 +144,8 @@ module MainLayout =
 
 let view (model : Model) (dispatch : Msg -> unit) =
     div [] [
-        MainLayout.navbar model dispatch
-        MainLayout.renderBody dispatch model
+        MainLayout.navbar model (InitMsg >> dispatch)
+        MainLayout.renderBody (SubModelMsg >> dispatch) model
     ]
 
 #if DEBUG

@@ -38,6 +38,7 @@ type ServerMessages =
 type Msg =
     | ServerMessages of ServerMessages
     | FetchBlogsOfCat of BlogCategory
+    | ShowBlog of BlogTitle
     | Ignore
 
 let init() =
@@ -96,7 +97,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
                 |> List.map (fun x ->
                     {
                         name = x.ToString()
-                        onClick = (fun _ -> ())
+                        onClick = (fun _ -> x |> ShowBlog |> dispatch)
                     }
                 )
                 |> renderList
